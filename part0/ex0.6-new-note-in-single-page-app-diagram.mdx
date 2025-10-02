@@ -1,0 +1,26 @@
+sequenceDiagram
+    participant browser
+    participant server
+    participant database
+
+    Note left of browser: User types a new note and clicks "Add"
+
+    browser->>browser: JavaScript handles form submit, prevents default
+    Note right of browser: JS sends a POST request with the new note to the server
+
+    browser->>server: POST  /new_note_spa { "content": "new note" }
+    activate server
+
+    Note right of server: Server receives new note and saves it into the database
+
+    server->>database: Insert note into storage (content, date) VALUES ("new note", "2025-10-02")
+    activate database
+    database-->>server: success
+    deactivate database
+
+    server-->>browser: HTTP 201 created with new note data
+    deactivate server
+
+    Note right of browser: JavaScript receives response and updates the UI
+
+    browser->>browser: JS code updates date app with the new note

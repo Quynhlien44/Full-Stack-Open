@@ -1,0 +1,21 @@
+sequenceDiagram
+    participant browser
+    participant server
+
+    browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/spa
+    activate server
+
+    Note right of browser: The browser requests the single-page app from the server (HTML&JS)
+    server-->>browser: HTML document with JavaScript code
+    deactivate server
+
+    Note right of browser: The browser receives the HTML and starts executing JavaScript
+
+    browser->>browser: JavaScript code executes and fetches the notes JSON from server
+
+    browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/data.json
+    activate server
+    Note right of browser: The JS fetches note data and renders them from the server
+
+    server-->>browser: [{"content": "new Spa", "date": "2025-10-01"}, ...]
+    deactivate server

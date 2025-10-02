@@ -1,0 +1,28 @@
+sequenceDiagram
+    participant browser
+    participant server
+    participant database
+
+    Note left of browser: User writes a new note and clicks 'Save'
+
+    browser->>server: POST https://studies.cs.helsinki.fi/exampleapp/notes 
+    activate server
+
+    Note right of browser: Server inserts new note to database
+    server->>database: INSERT INTO notes (content, date) VALUES ("new note", "2025-09-30")
+    activate database
+    database-->>server: success
+    deactivate database
+
+    Note right of browser: Server responds with HTTP 302 Redirect to /exampleapp/notes
+    server-->>browser: HTTP 302 Redirect to /exampleapp/notes
+    deactivate server
+
+    Note right of browser: The browser follows redirect and sends GET request
+
+    browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/notes
+    activate server
+
+    Note right of browser: The browser fetches the notes page again and including new note
+    server-->>browser: HTML document with updated notes
+    deactivate server
