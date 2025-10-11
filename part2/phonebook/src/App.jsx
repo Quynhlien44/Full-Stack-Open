@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import personService from './services/persons'
 
+import Notification from './components/Notification'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
@@ -10,6 +11,7 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [filter, setFilter] = useState('')
+  const [notification, setNotification] = useState(null)
 
   useEffect(() => {
     personService
@@ -45,10 +47,26 @@ const App = () => {
         personService
           .update(existingPerson.id, changedPerson)
           .then(returnedPerson => {
-            setPersons(persons.map(p => p.id !== existingPerson.id ? p : returnedPerson))
+            setPersons(persons.map(p =>
+              p.id !== existingPerson.id ? p : returnedPerson
+            ))
             setNewName('')
             setNewNumber('')
+            setNotification({
+              type: 'success',
+              message: `Updated ${returnedPerson.name}'s number`
+            })
+            setTimeout(() => setNotification(null), 5000)
           })
+          .catch(error => {
+            setNotification({
+              type: 'error',
+              message: `Information of ${existingPerson.name} has already been removed from server`
+            })
+            setTimeout(() => setNotification(null), 5000)
+            setPersons(persons.filter(p => p.id !== existingPerson.id))
+          }
+          )
       }
       return
     }
@@ -60,9 +78,13 @@ const App = () => {
         setPersons(persons.concat(returnedPerson))
         setNewName('')
         setNewNumber('')
+        setNotification({
+          type: 'success',
+          message: `Added ${returnedPerson.name}`
+        })
+        setTimeout(() => setNotification(null), 5000)
       })
   }
-
 
   const personsToShow = persons.filter(person =>
     person.name.toLowerCase().includes(filter.toLowerCase())
@@ -71,6 +93,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification notification={notification} />
       <Filter value={filter} onChange={handleFilterChange} />
 
       <h2>add a new</h2>
