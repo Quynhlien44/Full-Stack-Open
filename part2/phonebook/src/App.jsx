@@ -84,6 +84,13 @@ const App = () => {
         })
         setTimeout(() => setNotification(null), 5000)
       })
+      .catch(error => {
+        setNotification({
+          type: 'error',
+          message: error.response.data.error
+        })
+        setTimeout(() => setNotification(null), 5000)
+      })
   }
 
   const personsToShow = persons.filter(person =>
