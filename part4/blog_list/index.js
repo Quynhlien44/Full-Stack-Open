@@ -1,22 +1,7 @@
-require('dotenv').config()
-const express = require('express')
-const mongoose = require('mongoose')
+const app = require('./app')
 const config = require('./utils/config')
-const middleware = require('./utils/middleware')
-const blogsRouter = require('./controllers/blogs')
 
-const app = express()
-
-const url = process.env.MONGODB_URI
-mongoose.connect(url)
-
-app.use(express.json())
-app.use('/api/blogs', blogsRouter)
-app.use(middleware.requestLogger)
-app.use(middleware.unknownEndpoint)
-app.use(middleware.errorHandler)
-
-const PORT = process.env.PORT || 3003
+const PORT = config.PORT || 3003
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
