@@ -1,22 +1,47 @@
 const blogsRouter = require('express').Router()
 const User = require('../models/user')
 const Blog = require('../models/blog')
+const middleware = require('../utils/middleware')
+const jwt = require('jsonwebtoken')
 
-blogsRouter.get('/', async (req, res, next) => {
+const getTokenFrom = request => {
+    const authorization = request.get('authorization')
+    if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
+        return authorization.substring(7)
+    }
+    return null
+}
+
+blogsRouter.get('/', async (request, response, next) => {
     try {
         const blogs = await Blog.find({}).populate('user', { username: 1, name: 1 })
-        res.json(blogs)
+        response.json(blogs)
     } catch (error) {
         next(error)
     }
 })
 
-blogsRouter.post('/', async (req, res, next) => {
+blogsRouter.post('/', middleware.userExtractor, async (request, response, next) => {
     try {
-        const { title, author, url, likes } = req.body
-        const users = await User.find({})
-        const user = users[0]
+        /*const decodedToken = jwt.verify(request.token, process.env.SECRET)
+        if (!decodedToken.id) {
+            return response.status(401).json({ error: 'token missing or invalid' })
+        }*/
+        const token = request.token
+        if (!token) {
+            return response.status(401).json({ error: 'token missing' })
+        }
+        const decodedToken = jwt.verify(token, process.env.SECRET)
+        if (!decodedToken.id) {
+            return response.status(401).json({ error: 'token invalid' })
+        }
 
+        const user = await User.findById(decodedToken.id)
+        //const user = request.user
+        const { title, author, url, likes } = request.body
+        if (!title || !url) {
+            return response.status(400).json({ error: 'title or url missing' })
+        }
         const blog = new Blog({
             url,
             title,
@@ -29,23 +54,39 @@ blogsRouter.post('/', async (req, res, next) => {
         user.blogs = user.blogs.concat(savedBlog._id)
         await user.save()
         const populatedBlog = await Blog.findById(savedBlog._id).populate('user', { username: 1, name: 1 })
-        res.status(201).json(populatedBlog)
+        response.status(201).json(populatedBlog)
     } catch (error) {
         next(error)
     }
 })
 
-blogsRouter.delete('/:id', async (req, res, next) => {
+blogsRouter.delete('/:id', middleware.userExtractor, async (request, response, next) => {
     try {
-        await Blog.findByIdAndDelete(req.params.id)
-        res.status(204).end()
+        /*const decodedToken = jwt.verify(request.token, process.env.SECRET)
+        if (!decodedToken.id) {
+            return response.status(401).json({ error: 'token missing or invalid' })
+        }*/
+
+        const user = request.user
+        const blog = await Blog.findById(request.params.id)
+
+        if (!blog) {
+            return response.status(404).json({ error: 'blog not found' })
+        }
+        if (blog.user.toString() !== user._id.toString()) {
+            return response.status(401).json({ error: 'only the creator can delete the blog' })
+        }
+        await Blog.findByIdAndDelete(request.params.id)
+        user.blogs = user.blogs.filter(b => b.toString() !== request.params.id)
+        await user.save()
+        response.status(204).end()
     } catch (error) {
         next(error)
     }
 })
 
-blogsRouter.put('/:id', async (req, res, next) => {
-    const { title, author, url, likes } = req.body
+blogsRouter.put('/:id', middleware.userExtractor, async (request, response, next) => {
+    const { title, author, url, likes } = request.body
     const blog = {
         title,
         author,
@@ -54,14 +95,14 @@ blogsRouter.put('/:id', async (req, res, next) => {
     }
     try {
         const updatedBlog = await Blog.findByIdAndUpdate(
-            req.params.id,
+            request.params.id,
             blog,
             { new: true, runValidators: true, context: 'query' }
         )
         if (updatedBlog) {
-            res.json(updatedBlog)
+            response.json(updatedBlog)
         } else {
-            res.status(404).end()
+            response.status(404).end()
         }
     } catch (error) {
         next(error)
