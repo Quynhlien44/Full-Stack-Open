@@ -2,11 +2,12 @@ const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
 const api = supertest(app)
+const Blog = require('../models/blog')
 
 describe('when there is initially some blogs saved', () => {
     beforeEach(async () => {
-        await mongoose.connection.collection('blogs').deleteMany({})
-        await mongoose.connection.collection('blogs').insertMany([
+        await Blog.deleteMany({})
+        await Blog.insertMany([
             {
                 title: 'Blog 1',
                 author: 'Author 1',
@@ -111,5 +112,57 @@ describe('creating a new blog', () => {
             .post('/api/blogs')
             .send(newBlog)
             .expect(400)
+    })
+})
+
+describe('deletion of a blog', () => {
+    test('succeeds with status code 204 if id is valid', async () => {
+        const blogsAtStartResponse = await api.get('/api/blogs')
+        const blogsAtStart = blogsAtStartResponse.body
+        const blogToDelete = blogsAtStart[0]
+
+        await api
+            .delete(`/api/blogs/${blogToDelete.id}`)
+            .expect(204)
+
+        const blogsAtEndResponse = await api.get('/api/blogs')
+        const blogsAtEnd = blogsAtEndResponse.body
+
+        expect(blogsAtEnd).toHaveLength(blogsAtStart.length - 1)
+
+        const titles = blogsAtEnd.map(blog => blog.title)
+        expect(titles).not.toContain(blogToDelete.title)
+    })
+})
+
+afterAll(async () => {
+    await mongoose.connection.close()
+})
+
+describe('updating a blog', () => {
+    test('succeeds in updating the likes of a blog', async () => {
+        const blogsAtStart = (await api.get('/api/blogs')).body
+        const blogToUpdate = blogsAtStart[0]
+
+        const updatedData = {
+            ...blogToUpdate,
+            likes: blogToUpdate.likes + 10,
+        }
+
+        const response = await api
+            .put(`/api/blogs/${blogToUpdate.id}`)
+            .send(updatedData)
+            .expect(200)
+            .expect('Content-Type', /application\/json/)
+
+        expect(response.body.likes).toBe(blogToUpdate.likes + 10)
+    })
+
+    test('returns 404 if blog does not exist', async () => {
+        const nonExistingId = '651123456789012345678901'
+        await api
+            .put(`/api/blogs/${nonExistingId}`)
+            .send({ likes: 100 })
+            .expect(404)
     })
 })
