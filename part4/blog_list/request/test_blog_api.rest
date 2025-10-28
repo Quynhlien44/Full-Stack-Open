@@ -1,0 +1,51 @@
+// Get all blogs
+GET http://localhost:3003/api/blogs
+
+// Create a new blog (replace <TOKEN> with the actual token obtained from login)
+POST http://localhost:3003/api/blogs
+Content-Type: application/json
+Authorization: Bearer <TOKEN>
+
+{
+  "title": "New Blog",
+  "author": "New Author",
+  "url": "http://newblog.com",
+  "likes": 5
+}
+
+// Create blog missing url/title field (expect 400)
+POST http://localhost:3003/api/blogs
+Content-Type: application/json
+Authorization: Bearer <TOKEN>
+
+{
+  "author": "No Url Blog",
+  "likes": 5
+}
+
+// Create blog without token (expect 401)
+POST /api/blogs
+Content-Type: application/json
+
+{
+  "title": "Should fail",
+  "author": "No token",
+  "url": "https://fail.com",
+  "likes": 1
+}
+
+// Delete a blog by ID (replace <BLOG_ID> with the actual blog ID)
+DELETE http://localhost:3003/api/blogs/<BLOG_ID>
+Authorization: Bearer <TOKEN>
+
+// Update a blog by ID (replace <BLOG_ID> with the actual blog ID)
+PUT http://localhost:3003/api/blogs/<BLOG_ID>
+Content-Type: application/json  
+Authorization: Bearer <TOKEN>
+
+{
+  "title": "Updated Blog Title",
+  "author": "Updated Author",
+  "url": "http://updatedblog.com",
+  "likes": 10
+}
