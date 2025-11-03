@@ -200,14 +200,12 @@ describe('When logged in', () => {
         }
         await page.reload()
 
-        // Mở view các blog
         for (const title of ['Blog One', 'Blog Two', 'Blog Three']) {
             const blog = page.locator('.blog', { hasText: title }).first()
             const viewButton = blog.getByRole('button', { name: 'view' })
             await viewButton.click()
         }
 
-        // Like blog theo lượt
         for (let i = 0; i < 5; i++) {
             await page.locator('.blog', { hasText: 'Blog Two' }).first().locator('.like-button').click()
             await page.waitForTimeout(200)
