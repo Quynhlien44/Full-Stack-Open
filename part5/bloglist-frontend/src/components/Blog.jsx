@@ -40,15 +40,11 @@ const Blog = ({ blog, onLike, onRemove, currentUser }) => {
           <div className="url">{blog.url}</div>
           <div className="likes">
             likes {blog.likes}{' '}
-            <button onClick={onLike} className="like-button">like</button>
+            <button onClick={() => onLike(blog)} className="like-button">like</button>
           </div>
           <div className="user">{blog.user.name}</div>
           {canRemove && (
-            <button
-              onClick={onRemove}
-              className="remove-button"
-            >remove
-            </button>
+            <button onClick={() => onRemove(blog)} className="remove-button">remove</button>
           )}
         </div>
       )}

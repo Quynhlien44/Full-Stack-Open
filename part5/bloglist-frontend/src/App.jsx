@@ -86,20 +86,19 @@ const App = () => {
 
   const handleRemove = (blog) => {
     const ok = window.confirm(`Remove blog ${blog.title} by ${blog.author}?`)
-    if (ok) {
-      blogService.remove(blog.id)
-        .then(() => {
-          setBlogs(blogs.filter(b => b.id !== blog.id))
-          setNotification(`Deleted blog "${blog.title}"`)
-          setNotificationType('success')
-          setTimeout(() => setNotification(null), 5000)
-        })
-        .catch(() => {
-          setNotification('Error deleting blog')
-          setNotificationType('error')
-          setTimeout(() => setNotification(null), 5000)
-        })
-    }
+    if (!ok) return;
+    blogService.remove(blog.id)
+      .then(() => {
+        setBlogs((prevBlogs) => prevBlogs.filter(b => b.id !== blog.id))
+        setNotification(`Deleted blog "${blog.title}"`)
+        setNotificationType('success')
+        setTimeout(() => setNotification(null), 5000)
+      })
+      .catch(() => {
+        setNotification('Error deleting blog')
+        setNotificationType('error')
+        setTimeout(() => setNotification(null), 5000)
+      })
   }
 
   // logout function
@@ -115,8 +114,9 @@ const App = () => {
         <Notification message={notification} type={notificationType} />
         <form onSubmit={handleLogin}>
           <div>
-            username
+            <label htmlFor="username">username</label>
             <input
+              id="username"
               type="text"
               value={username}
               name="Username"
@@ -124,8 +124,9 @@ const App = () => {
             />
           </div>
           <div>
-            password
+            <label htmlFor="password">password</label>
             <input
+              id="password"
               type="password"
               value={password}
               name="Password"
