@@ -12,7 +12,7 @@ const Blog = ({ blog, onLike, onRemove, currentUser }) => {
     marginBottom: 5
   }
 
-  const handleLike = async () => {
+  /*const handleLike = async () => {
     const updatedBlog = {
       ...blog,
       likes: blog.likes + 1,
@@ -20,7 +20,7 @@ const Blog = ({ blog, onLike, onRemove, currentUser }) => {
     }
     await blogService.update(blog.id, updatedBlog)
     onLike(blog)
-  }
+  }*/
 
   const canRemove = blog.user && (
     blog.user.username === currentUser.username ||
@@ -28,25 +28,25 @@ const Blog = ({ blog, onLike, onRemove, currentUser }) => {
   )
 
   return (
-    <div style={blogStyle}>
-      <div>
+    <div style={blogStyle} className="blog">
+      <div className="blog-basic">
         {blog.title} {blog.author}
-        <button onClick={() => setVisible(!visible)}>
+        <button onClick={() => setVisible(!visible)} className="toggle-button">
           {visible ? 'hide' : 'view'}
         </button>
       </div>
       {visible && (
-        <div>
-          <div>{blog.url}</div>
-          <div>
+        <div className="blog-details">
+          <div className="url">{blog.url}</div>
+          <div className="likes">
             likes {blog.likes}{' '}
-            <button onClick={handleLike}>like</button>
+            <button onClick={onLike} className="like-button">like</button>
           </div>
-          <div>{blog.user.name || ''}</div>
+          <div className="user">{blog.user.name}</div>
           {canRemove && (
             <button
-              onClick={() => onRemove(blog)}
-              style={{ backgroundColor: 'blue', color: 'white' }}
+              onClick={onRemove}
+              className="remove-button"
             >remove
             </button>
           )}
