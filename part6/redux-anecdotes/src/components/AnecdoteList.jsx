@@ -1,35 +1,38 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { voteAnecdote } from '../reducers/anecdoteReducer'
-import { setNotification } from '../reducers/notificationReducer'
+import { voteAnecdote, initializeAnecdotes } from '../reducers/anecdoteReducer'
+import { showNotification } from '../reducers/notificationReducer'
 
 const AnecdoteList = () => {
-    const anecdotes = useSelector(state => {
-        const filter = state.filter
-        return state.anecdotes.filter(anecdote =>
-            anecdote.content.toLowerCase().includes(filter.toLowerCase())
-        )
-    })
     const dispatch = useDispatch()
+    const anecdotes = useSelector(state => state.anecdotes)
+    const filter = useSelector(state => state.filter)
 
-    const sortedAnecdotes = anecdotes.slice().sort((a, b) => b.votes - a.votes)
+    useEffect(() => {
+        dispatch(initializeAnecdotes())
+    }, [dispatch])
 
-    const handleVote = (anecdote) => {
-        dispatch(voteAnecdote(anecdote.id))
-        dispatch(setNotification(`You voted '${anecdote.content}'`, 5))
+    const handleVote = async (id) => {
+        await dispatch(voteAnecdote(id))
+        const anecdote = anecdotes.find(a => a.id === id)
+        dispatch(showNotification(`you voted '${anecdote.content}'`, 10))
     }
+
+    const filteredAnecdotes = anecdotes.filter(a =>
+        a.content.toLowerCase().includes(filter.toLowerCase())
+    )
 
     return (
         <div>
-            {sortedAnecdotes.map(anecdote => (
+            {filteredAnecdotes.map(anecdote =>
                 <div key={anecdote.id}>
                     <div>{anecdote.content}</div>
                     <div>
-                        has {anecdote.votes}
-                        <button onClick={() => handleVote(anecdote)}>vote</button>
+                        has {anecdote.votes} votes
+                        <button onClick={() => handleVote(anecdote.id)}>vote</button>
                     </div>
                 </div>
-            ))}
+            )}
         </div>
     )
 }
