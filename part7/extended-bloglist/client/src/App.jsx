@@ -9,6 +9,14 @@ import loginService from './services/login'
 import { setNotification, clearNotification } from './redux/notificationSlice'
 import { setBlogs, addBlog, updateBlog, deleteBlog } from './redux/blogSlice'
 import { setUser, clearUser } from './redux/userSlice'
+import {
+  BrowserRouter as Router,
+  Routes, Route, Link
+} from 'react-router-dom'
+import Users from './components/Users'
+import User from './components/User'
+import BlogView from './components/BlogView'
+import Navigation from './components/Navigation'
 
 const App = () => {
   const dispatch = useDispatch()
@@ -131,31 +139,47 @@ const App = () => {
   }
 
   
-  return (
+return (
+  <Router>
     <div>
-      <h2>blogs</h2>
+      <Navigation user={user} handleLogout={handleLogout} />
+      <h2>blog app</h2>
       <Notification message={notification?.message} type={notification?.type} />
-      <p>
-        {user.name} logged in
-        <button onClick={handleLogout}>logout</button>
-      </p>
-      <Togglable buttonLabel="create new blog" ref={blogFormRef}>
-        <BlogForm createBlog={handleCreateBlog} />
-      </Togglable>
-
-      {blogs
-        .slice()
-        .sort((a, b) => b.likes - a.likes)
-        .map(blog =>
-          <Blog
-            key={blog.id}
-            blog={blog}
-            onLike={handleLike}
-            onRemove={handleRemove}
-            currentUser={user} />
-        )}
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <div>
+              <Togglable buttonLabel="create new blog" ref={blogFormRef}>
+                <BlogForm createBlog={handleCreateBlog} />
+              </Togglable>
+              {blogs
+                .slice()
+                .sort((a, b) => b.likes - a.likes)
+                .map(blog => (
+                  <div 
+                  key={blog.id}
+                  style={{
+                    border: '1px solid black',
+                    padding: '4px 8px 0 8px',
+                    margin: '4px 0'
+                  }}
+                  >
+                    <Link to={`/blogs/${blog.id}`}>
+                      {blog.title} {blog.author}
+                    </Link>
+                  </div>
+              ))}
+          </div>
+          }
+        />
+        <Route path="/blogs/:id" element={<BlogView handleLike={handleLike} />} />
+        <Route path="/users" element={<Users />} />
+        <Route path="/users/:id" element={<User />} />
+      </Routes>
     </div>
-  )
+  </Router>
+)
 }
 
 export default App

@@ -8,7 +8,8 @@ const blogSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
-    }
+    },
+  comments: [{ type: String }]
 })
 
 blogSchema.set('toJSON', {
@@ -20,7 +21,8 @@ blogSchema.set('toJSON', {
             author: returnedObject.author,
             user: returnedObject.user,
             likes: returnedObject.likes,
-            id: returnedObject.id
+            id: returnedObject.id,
+            comments: returnedObject.comments
         }
         return obj
     }

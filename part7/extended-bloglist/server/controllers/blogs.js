@@ -109,4 +109,20 @@ blogsRouter.put('/:id', middleware.userExtractor, async (request, response, next
     }
 })
 
+blogsRouter.post('/:id/comments', async (request, response, next) => {
+  try {
+    const { comment } = request.body
+    const blog = await Blog.findById(request.params.id)
+    if (!blog) return response.status(404).json({ error: 'blog not found' })
+
+    blog.comments = blog.comments.concat(comment)
+    const updated = await blog.save()
+    
+    const populated = await Blog.findById(updated._id).populate('user', { username: 1, name: 1 })
+    response.json(populated)
+  } catch (error) {
+    next(error)
+  }
+})
+
 module.exports = blogsRouter
