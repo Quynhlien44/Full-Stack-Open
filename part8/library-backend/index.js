@@ -1,3 +1,11 @@
+const { makeExecutableSchema } = require('@graphql-tools/schema')
+const http = require('http')
+const { expressMiddleware } = require('@apollo/server/express4')
+const express = require('express')
+const cors = require('cors')
+const { WebSocketServer } = require('ws')
+const { useServer } = require('graphql-ws/use/ws')
+const { PubSub } = require('graphql-subscriptions')
 require('dotenv').config()
 const { ApolloServer } = require('@apollo/server')
 const { startStandaloneServer } = require('@apollo/server/standalone')
@@ -72,7 +80,12 @@ const typeDefs = `
       password: String!
     ): Token
   }
+  type Subscription {
+    bookAdded: Book!
+  }
 `
+
+const pubsub = new PubSub()
 
 const resolvers = {
   Query: {
@@ -95,7 +108,22 @@ const resolvers = {
       return Book.find(filter).populate('author')
     },
 
-    allAuthors: async () => Author.find({}),
+    allAuthors: async () => {
+      const authors = await Author.find({})
+      const books = await Book.find({})
+
+      return authors.map(author => {
+        const bookCount = books.filter(
+          book => book.author.toString() === author._id.toString()
+        ).length
+
+        return {
+          ...author._doc,
+          bookCount
+        }
+      })
+    },
+
     me: (root, args, context) => {
       return context.currentUser
     }
@@ -123,7 +151,11 @@ const resolvers = {
         })
 
         await book.save()
-        return book.populate('author')
+        const populatedBook = await book.populate('author')
+
+        pubsub.publish('BOOK_ADDED', { bookAdded: populatedBook })
+
+        return populatedBook
 
       } catch (error) {
         throw new GraphQLError(error.message, {
@@ -196,32 +228,80 @@ const resolvers = {
     }
   },
 
-  Author: {
-    bookCount: async (root) => {
-      return Book.countDocuments({ author: root._id })
+  Subscription: {
+    bookAdded: {
+      subscribe: () => pubsub.asyncIterator(['BOOK_ADDED'])
     }
   }
 }
 
-const server = new ApolloServer({
+const schema = makeExecutableSchema({
   typeDefs,
   resolvers,
 })
 
-startStandaloneServer(server, {
-  listen: { port: 4000 },
-  context: async ({ req }) => {
-    const auth = req ? req.headers.authorization : null
+const start = async () => {
+  const app = express()
+  const httpServer = http.createServer(app)
 
-    if (auth && auth.startsWith('Bearer ')) {
-      const decodedToken = jwt.verify(
-        auth.substring(7),
-        process.env.JWT_SECRET
-      )
-      const currentUser = await User.findById(decodedToken.id)
-      return { currentUser }
-    }
+  const server = new ApolloServer({
+    schema,
+  })
 
-    return {}
-  }
-})
+  await server.start()
+
+  app.use(cors())
+  app.use(express.json())
+
+  app.use(
+    '/graphql',
+    expressMiddleware(server, {
+      context: async ({ req }) => {
+        const auth = req ? req.headers.authorization : null
+
+        if (auth && auth.startsWith('Bearer ')) {
+          const decodedToken = jwt.verify(
+            auth.substring(7),
+            process.env.JWT_SECRET
+          )
+          const currentUser = await User.findById(decodedToken.id)
+          return { currentUser }
+        }
+
+        return {}
+      },
+    })
+  )
+
+  const wsServer = new WebSocketServer({
+    server: httpServer,
+    path: '/graphql',
+  })
+
+  useServer(
+    {
+      schema,
+      context: async (ctx) => {
+        const auth = ctx.connectionParams?.authorization
+
+        if (auth && auth.startsWith('Bearer ')) {
+          const decodedToken = jwt.verify(
+            auth.substring(7),
+            process.env.JWT_SECRET
+          )
+          const currentUser = await User.findById(decodedToken.id)
+          return { currentUser }
+        }
+
+        return {}
+      },
+    },
+    wsServer
+  )
+
+  httpServer.listen(4000, () => {
+    console.log('Server ready at http://localhost:4000/graphql')
+  })
+}
+
+start()

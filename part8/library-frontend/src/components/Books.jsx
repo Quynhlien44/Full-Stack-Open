@@ -5,12 +5,7 @@ import { ALL_BOOKS } from '../queries'
 const Books = (props) => {
   const [selectedGenre, setSelectedGenre] = useState(null)
 
-  const {
-    data: booksData,
-    loading: booksLoading,
-    error: booksError,
-    refetch
-  } = useQuery(ALL_BOOKS, {
+  const { data, loading, error } = useQuery(ALL_BOOKS, {
     variables: { author: null, genre: selectedGenre }
   })
 
@@ -18,15 +13,14 @@ const Books = (props) => {
     variables: { author: null, genre: null }
   })
 
-
   if (!props.show) return null
-  if (booksLoading || allGenresResult.loading)
+  if (loading || allGenresResult.loading)
     return <div>loading...</div>
 
-  if (booksError)
-    return <div>Error: {booksResult.error.message}</div>
+  if (error)
+    return <div>Error: {error.message}</div>
 
-  const books = booksData?.allBooks || []
+  const books = data?.allBooks || []
   const allBooks = allGenresResult.data?.allBooks || []
 
   const genres = [
@@ -64,19 +58,13 @@ const Books = (props) => {
         {genres.map((genre) => (
           <button
             key={genre}
-            onClick={() => {
-              setSelectedGenre(genre)
-              refetch({ author: null, genre })
-            }}
+            onClick={() => setSelectedGenre(genre)}
           >
             {genre}
           </button>
         ))}
 
-        <button onClick={() => {
-                  setSelectedGenre(null)
-                  refetch({ author: null, genre: null })
-                }}>
+        <button onClick={() => setSelectedGenre(null)}>
           all genres
         </button>
       </div>
