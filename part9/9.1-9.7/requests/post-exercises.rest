@@ -1,0 +1,29 @@
+### Success
+POST http://localhost:3003/exercises
+Content-Type: application/json
+
+{
+  "daily_exercises": [1, 0, 2, 0, 3, 0, 2.5],
+  "target": 2.5
+}
+
+###
+
+### Missing parameters
+POST http://localhost:3003/exercises
+Content-Type: application/json
+
+{
+  "target": 2.5
+}
+
+###
+
+### Malformatted parameters
+POST http://localhost:3003/exercises
+Content-Type: application/json
+
+{
+  "daily_exercises": [1, "abc", 2],
+  "target": 2
+}
