@@ -9,6 +9,11 @@ const diagnoses: Diagnosis[] = [
   {
     code: "Z57.1",
     name: "Occupational exposure to radiation"
+  },
+  {
+    code: "S62.5",
+    name: "Fracture of thumb",
+    latin: "Fractura pollicis"
   }
 ];
 
