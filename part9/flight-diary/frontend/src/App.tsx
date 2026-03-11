@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import axios, { AxiosError } from 'axios';
 import type { DiaryEntry, NewDiaryEntry, Visibility, Weather } from './types';
 
+const visibilityOptions: Visibility[] = ['great', 'good', 'ok', 'poor'];
+const weatherOptions: Weather[] = ['sunny', 'rainy', 'cloudy', 'stormy', 'windy'];
+
 const App = () => {
   const [diaries, setDiaries] = useState<DiaryEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -14,29 +17,23 @@ const App = () => {
   });
 
   useEffect(() => {
-  const fetchDiaries = async () => {
-    try {
-      const response = await fetch('http://localhost:3000/api/diaries');
-      if (!response.ok) {
-        throw new Error(`Fetch failed with status ${response.status}`);
+    const fetchDiaries = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/diaries');
+        if (!response.ok) {
+          throw new Error(`Fetch failed with status ${response.status}`);
+        }
+        const data = (await response.json()) as DiaryEntry[];
+        setDiaries(data);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Unknown error');
       }
-      const data = (await response.json()) as DiaryEntry[];
-      setDiaries(data);
-    } catch (e) {
-      if (e instanceof Error) {
-        setError(e.message);
-      } else {
-        setError('Unknown error');
-      }
-    }
-  };
+    };
 
-  void fetchDiaries();
-}, []);
+    void fetchDiaries();
+  }, []);
 
-  const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setNewEntry(prev => ({
       ...prev,
@@ -45,46 +42,47 @@ const App = () => {
   };
 
   const addDiary = async (event: React.FormEvent) => {
-  event.preventDefault();
-  setError(null);
+    event.preventDefault();
+    setError(null);
 
-  try {
-    const response = await axios.post<DiaryEntry>(
-      'http://localhost:3000/api/diaries',
-      newEntry
-    );
+    try {
+      const response = await axios.post<DiaryEntry>(
+        'http://localhost:3000/api/diaries',
+        newEntry
+      );
 
-    const created = response.data;
-    setDiaries(prev => prev.concat(created));
+      setDiaries(prev => prev.concat(response.data));
+      setNewEntry({
+        date: '',
+        visibility: 'great',
+        weather: 'sunny',
+        comment: ''
+      });
+    } catch (e) {
+      const err = e as AxiosError;
 
-    setNewEntry({
-      date: '',
-      visibility: 'great',
-      weather: 'sunny',
-      comment: ''
-    });
-  } catch (e) {
-    const err = e as AxiosError;
-
-    if (err.response && typeof err.response.data === 'string') {
-      setError(err.response.data);
-    } else if (err.response && err.response.data && typeof err.response.data === 'object') {
-      const data = err.response.data as { error?: string };
-      setError(data.error ?? 'Unknown validation error');
-    } else if (err.message) {
-      setError(err.message);
-    } else {
-      setError('Unknown error when adding diary');
+      if (err.response && typeof err.response.data === 'string') {
+        const msg = err.response.data.split('Error: ').at(-1) ?? err.response.data;
+        setError(msg);
+      } else if (err.response && err.response.data && typeof err.response.data === 'object') {
+        const data = err.response.data as { error?: string };
+        setError(data.error ?? 'Unknown validation error');
+      } else if (err.message) {
+        setError(err.message);
+      } else {
+        setError('Unknown error when adding diary');
+      }
     }
-  }
-};
+  };
 
-  const visibilityOptions: Visibility[] = ['great', 'good', 'ok', 'poor'];
-  const weatherOptions: Weather[] = ['sunny', 'rainy', 'cloudy', 'stormy', 'windy'];
+  const formatDate = (isoDate: string) => {
+    if (!isoDate) return '';
+    const [year, month, day] = isoDate.split('-');
+    return `${year}/${month}/${day}`;
+  };
 
   return (
     <div style={{ padding: '1rem' }}>
-      <h1>Flight diaries</h1>
 
       {error && <p style={{ color: 'red' }}>Error: {error}</p>}
 
@@ -99,34 +97,39 @@ const App = () => {
             onChange={handleChange}
           />
         </div>
+
         <div>
           visibility:{' '}
-          <select
-            name="visibility"
-            value={newEntry.visibility}
-            onChange={handleChange}
-          >
-            {visibilityOptions.map(v => (
-              <option key={v} value={v}>
-                {v}
-              </option>
-            ))}
-          </select>
+          {visibilityOptions.map(option => (
+            <label key={option} style={{ marginRight: '0.5rem' }}>
+              {option}
+              <input
+                type="radio"
+                name="visibility"
+                value={option}
+                checked={newEntry.visibility === option}
+                onChange={handleChange}
+              />
+            </label>
+          ))}
         </div>
+
         <div>
           weather:{' '}
-          <select
-            name="weather"
-            value={newEntry.weather}
-            onChange={handleChange}
-          >
-            {weatherOptions.map(w => (
-              <option key={w} value={w}>
-                {w}
-              </option>
-            ))}
-          </select>
+          {weatherOptions.map(option => (
+            <label key={option} style={{ marginRight: '0.5rem' }}>
+              {option}
+              <input
+                type="radio"
+                name="weather"
+                value={option}
+                checked={newEntry.weather === option}
+                onChange={handleChange}
+              />
+            </label>
+          ))}
         </div>
+
         <div>
           comment:{' '}
           <input
@@ -136,13 +139,14 @@ const App = () => {
             onChange={handleChange}
           />
         </div>
+
         <button type="submit">add</button>
       </form>
 
       <h2>Diary entries</h2>
       {diaries.map(d => (
         <div key={d.id} style={{ marginBottom: '1rem' }}>
-          <h3>{d.date}</h3>
+          <h3>{formatDate(d.date)}</h3>
           <p>visibility: {d.visibility}</p>
           <p>weather: {d.weather}</p>
           {d.comment && (
