@@ -9,10 +9,19 @@ router.get('/', (_req, res) => {
   res.json(patientService.getNonSensitivePatients());
 });
 
+router.get('/:id', (req, res) => {
+  const patient = patientService.getPatient(req.params.id);
+
+  if (!patient) {
+    return res.status(404).send({ error: 'Patient not found' });
+  }
+
+  return res.json(patient);
+});
+
 router.post('/', (req, res) => {
   try {
     const newPatient = parseNewPatientWithZod(req.body);
-
     const addedPatient = patientService.addPatient(newPatient);
     res.json(addedPatient);
   } catch (e: unknown) {
