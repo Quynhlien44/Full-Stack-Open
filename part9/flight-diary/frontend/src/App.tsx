@@ -66,12 +66,9 @@ const App = () => {
   } catch (e) {
     const err = e as AxiosError;
 
-    // Nếu backend gửi body text hoặc JSON, lấy message từ đó
     if (err.response && typeof err.response.data === 'string') {
-      // backend flight-diary thường trả "Something went wrong. Error: Incorrect visibility: best ever"
       setError(err.response.data);
     } else if (err.response && err.response.data && typeof err.response.data === 'object') {
-      // trường hợp backend gửi JSON { error: "..." }
       const data = err.response.data as { error?: string };
       setError(data.error ?? 'Unknown validation error');
     } else if (err.message) {
@@ -81,7 +78,6 @@ const App = () => {
     }
   }
 };
-
 
   const visibilityOptions: Visibility[] = ['great', 'good', 'ok', 'poor'];
   const weatherOptions: Weather[] = ['sunny', 'rainy', 'cloudy', 'stormy', 'windy'];
