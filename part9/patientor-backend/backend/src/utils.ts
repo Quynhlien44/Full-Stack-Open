@@ -126,7 +126,7 @@ const parseHealthCheckRating = (rating: unknown): HealthCheckRating => {
     throw new Error('Incorrect or missing healthCheckRating');
   }
   if (!Object.values(HealthCheckRating).includes(rating)) {
-    throw new Error('Incorrect healthCheckRating');
+    throw new Error(`Value of healthCheckRating incorrect: ${rating}`);
   }
   return rating;
 };
