@@ -2,6 +2,7 @@ import express from 'express';
 import patientService from '../services/patientService';
 import { parseNewPatientWithZod } from '../zodSchemas';
 import { ZodError } from 'zod';
+import { toNewEntry } from '../utils';
 
 const router = express.Router();
 
@@ -32,6 +33,20 @@ router.post('/', (req, res) => {
       });
     }
 
+    let errorMessage = 'Something went wrong.';
+    if (e instanceof Error) {
+      errorMessage += ' Error: ' + e.message;
+    }
+    return res.status(400).send(errorMessage);
+  }
+});
+
+router.post('/:id/entries', (req, res) => {
+  try {
+    const newEntry = toNewEntry(req.body);
+    const addedEntry = patientService.addEntry(req.params.id, newEntry);
+    res.json(addedEntry);
+  } catch (e: unknown) {
     let errorMessage = 'Something went wrong.';
     if (e instanceof Error) {
       errorMessage += ' Error: ' + e.message;

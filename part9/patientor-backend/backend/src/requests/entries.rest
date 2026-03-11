@@ -1,0 +1,27 @@
+### Add valid HealthCheck entry
+POST http://localhost:3001/api/patients/d2773336-f723-11e9-8f0b-362b9e155667/entries
+Content-Type: application/json
+
+{
+  "date": "2023-01-04",
+  "type": "HealthCheck",
+  "specialist": "Dr Alban",
+  "description": "good",
+  "diagnosisCodes": ["S62.5"],
+  "healthCheckRating": 1
+}
+
+### Invalid healthCheckRating
+POST http://localhost:3001/api/patients/d2773336-f723-11e9-8f0b-362b9e155667/entries
+Content-Type: application/json
+
+{
+  "date": "2023-01-04",
+  "type": "HealthCheck",
+  "specialist": "Dr House",
+  "description": "problematic entry",
+  "healthCheckRating": 15
+}
+
+### Check patient entries
+GET http://localhost:3001/api/patients/d2773336-f723-11e9-8f0b-362b9e155667

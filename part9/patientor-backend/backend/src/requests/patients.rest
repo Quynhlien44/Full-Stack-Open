@@ -1,0 +1,35 @@
+### 1. Get list of patients (non-sensitive)
+GET http://localhost:3001/api/patients
+
+###
+
+### 2. Create a valid patient
+POST http://localhost:3001/api/patients
+Content-Type: application/json
+
+{
+"name": "Lien Nguyen",
+"dateOfBirth": "2005-04-04",
+"ssn": "230345-123X",
+"gender": "female",
+"occupation": "student"
+}
+
+###
+
+### 3. Create patient with missing field (pay 400)
+POST http://localhost:3001/api/patients
+Content-Type: application/json
+
+{
+"dateOfBirth": "1990-01-01",
+"SSN": "010190-999X",
+"Gender": "Male",
+"Occupation": "Testing participant"
+}
+
+###
+
+### 4. Get complete information for a patient (including items)
+# Edit ID to match your data, for example John McClane:
+GET http://localhost:3001/api/patient/d2773336-f723-11e9-8f0b-362b9e155667
